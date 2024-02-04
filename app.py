@@ -1,13 +1,13 @@
-import streamlit as st
+# model.py
 import pandas as pd
-import pickle
 from sklearn.model_selection import train_test_split
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
-from imblearn.over_sampling import RandomOverSampler
+from xgboost import XGBClassifier
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, classification_report
+from imblearn.over_sampling import RandomOverSampler
+import pickle
 
-# Function to preprocess training data
 def preprocess_data(genes):
     # Drop unnecessary columns
     columns_to_drop = ['status', 'chromosome', 'number-of-reports', 'gene-name', 'ensembl-id', 'gene-score', 'genetic-category']
@@ -31,7 +31,6 @@ def preprocess_data(genes):
 
     return X_resampled, y_resampled
 
-# Function to train and save models
 def train_and_save_models(X, y):
     classifiers = {
         'SVM': SVC(),
@@ -59,35 +58,33 @@ def train_and_save_models(X, y):
         print(report)
 
         # Save the trained model to disk
-        filename = f"{clf_name}.pkl"
+        filename = f"{clf_name}_model.pkl"
         with open(filename, "wb") as f:
             pickle.dump(clf, f)
 
     return classifiers
 
-# Function to preprocess input gene information
-def preprocess_gene_info(gene_info):
-    # Drop unnecessary columns (similar to the training data)
-    columns_to_drop = ['status', 'chromosome', 'number-of-reports', 'gene-name', 'ensembl-id', 'gene-score', 'genetic-category']
-    gene_info = gene_info.drop(columns=columns_to_drop)
+# main.py
+import streamlit as st
+import pandas as pd
+import pickle
 
-    # Encode gene symbols as dummy variables (similar to the training data)
-    gene_info_encoded = pd.get_dummies(gene_info, columns=['gene-symbol'])
+def load_model(model_name):
+    """
+    Load a trained model from disk.
+    """
+    with open(f"{model_name}.pkl", "rb") as f:
+        model = pickle.load(f)
+    return model
 
-    return gene_info_encoded
-
-# Function to make predictions
 def predict(gene_info, classifiers):
     """
     Make a prediction for a given gene using the loaded models.
     """
-    # Preprocess the input gene information
-    gene_info_processed = preprocess_gene_info(gene_info)
-
     # Make predictions using each model
     predictions = []
     for clf_name, clf in classifiers.items():
-        prediction = clf.predict(gene_info_processed)
+        prediction = clf.predict(gene_info)
         predictions.append(prediction[0])
 
     # Return the majority vote as the final prediction
@@ -98,7 +95,7 @@ st.title('Autism Genes Classifier')
 st.markdown("A simple web app to classify genes as syndromic or non-syndromic.")
 
 # Load the data
-genes = pd.read_csv("sfari_genes.csv")
+genes = pd.read_csv("drive/MyDrive/Gene/sfari_genes.csv")
 
 # Train and save the classifiers
 X_resampled, y_resampled = preprocess_data(genes)
@@ -123,4 +120,3 @@ if st.button("Classify Gene"):
             st.write(f"The gene {gene_symbol} is not associated with autism.")
     else:
         st.write("The gene symbol does not exist in the data.")
-
