@@ -95,7 +95,7 @@ st.title('Autism Genes Classifier')
 st.markdown("A simple web app to classify genes as syndromic or non-syndromic.")
 
 # Load the data
-genes = pd.read_csv("drive/MyDrive/Gene/sfari_genes.csv")
+genes = pd.read_csv("sfari_genes.csv")
 
 # Train and save the classifiers
 X_resampled, y_resampled = preprocess_data(genes)
