@@ -1,4 +1,3 @@
-# app.py
 import streamlit as st
 import pandas as pd
 import pickle
@@ -8,6 +7,7 @@ from sklearn.ensemble import RandomForestClassifier
 from imblearn.over_sampling import RandomOverSampler
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, classification_report
 
+# Function to preprocess training data
 def preprocess_data(genes):
     # Drop unnecessary columns
     columns_to_drop = ['status', 'chromosome', 'number-of-reports', 'gene-name', 'ensembl-id', 'gene-score', 'genetic-category']
@@ -31,6 +31,7 @@ def preprocess_data(genes):
 
     return X_resampled, y_resampled
 
+# Function to train and save models
 def train_and_save_models(X, y):
     classifiers = {
         'SVM': SVC(),
@@ -64,14 +65,29 @@ def train_and_save_models(X, y):
 
     return classifiers
 
+# Function to preprocess input gene information
+def preprocess_gene_info(gene_info):
+    # Drop unnecessary columns (similar to the training data)
+    columns_to_drop = ['status', 'chromosome', 'number-of-reports', 'gene-name', 'ensembl-id', 'gene-score', 'genetic-category']
+    gene_info = gene_info.drop(columns=columns_to_drop)
+
+    # Encode gene symbols as dummy variables (similar to the training data)
+    gene_info_encoded = pd.get_dummies(gene_info, columns=['gene-symbol'])
+
+    return gene_info_encoded
+
+# Function to make predictions
 def predict(gene_info, classifiers):
     """
     Make a prediction for a given gene using the loaded models.
     """
+    # Preprocess the input gene information
+    gene_info_processed = preprocess_gene_info(gene_info)
+
     # Make predictions using each model
     predictions = []
     for clf_name, clf in classifiers.items():
-        prediction = clf.predict(gene_info)
+        prediction = clf.predict(gene_info_processed)
         predictions.append(prediction[0])
 
     # Return the majority vote as the final prediction
@@ -107,3 +123,4 @@ if st.button("Classify Gene"):
             st.write(f"The gene {gene_symbol} is not associated with autism.")
     else:
         st.write("The gene symbol does not exist in the data.")
+
